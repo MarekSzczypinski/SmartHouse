@@ -3,13 +3,16 @@
 #include <ArduinoBLE.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ArduinoJson.h>
 
 #include "AddressRoomMap.h"
 #include "ExtremelySimpleLogger.h"
 
-// Wifi credentials
-const char* ssid = "o-scypki";
-const char* password = "szczy70pandy^";
+// #include "AWSIoTClient.h"
+
+// Credentials and Certificates
+// #include "aws_certificates.h"
+#include "wifi_config.h"
 
 // Start web server on port 80
 WebServer server(80);
@@ -179,25 +182,20 @@ void onPeripheralDisconnected(BLEDevice peripheral) {
 
 // HTTP handler
 void handleRoot() {
-  String json = "[";
-  bool first = true;
+  StaticJsonDocument<1024> respJsonDoc;
+  JsonArray array = respJsonDoc.to<JsonArray>();
   for (int i = 0; i < MAX_FOUND_PERIPHERALS; i++) {
-      if (!first) json += ",";
-      first = false;
-      json += "{";
-      json += "\"address\": \"" + knownPeripherals[i].address + "\"";
-      json += ", \"humidity\": ";
-      json += isnan(knownPeripherals[i].humidity) ? "null" : String(knownPeripherals[i].humidity, 2);
-      json += ", \"temperature\": ";
-      json += isnan(knownPeripherals[i].temperature) ? "null" : String(knownPeripherals[i].temperature, 2);
-      json += ", \"battery\": ";
-      json += (knownPeripherals[i].batteryLevel < 0) ? "null" : String(knownPeripherals[i].batteryLevel);
-      json += ", \"rssi\": ";
-      json += knownPeripherals[i].rssi;
-      json += "}";
+    JsonObject responseObj = array.createNestedObject();
+    responseObj["address"] = knownPeripherals[i].address;
+    responseObj["humidity"] = isnan(knownPeripherals[i].humidity) ? "null" : String(knownPeripherals[i].humidity, 2);
+    responseObj["temperature"] = isnan(knownPeripherals[i].temperature) ? "null" : String(knownPeripherals[i].temperature, 2);
+    responseObj["battery"] = (knownPeripherals[i].batteryLevel < 0) ? "null" : String(knownPeripherals[i].batteryLevel);
+    responseObj["rssi"] = knownPeripherals[i].rssi;
   }
-  json += "]";
-  server.send(200, "application/json", json);
+
+  String jsonString;
+  serializeJsonPretty(array, jsonString);
+  server.send(200, "application/json", jsonString);
 }
 
 // Better dashboard
@@ -262,7 +260,7 @@ void setup() {
   }
 
   // Connect to WiFi
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to WiFi ");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -278,7 +276,7 @@ void setup() {
 
   // initialize the Bluetooth® Low Energy hardware
   BLE.begin();
-  // setup cllbacks
+  // setup callbacks
   BLE.setEventHandler(BLEDiscovered, onPeripheralDiscovered);
   BLE.setEventHandler(BLEConnected, onPeripheralConnected);
   BLE.setEventHandler(BLEDisconnected, onPeripheralDisconnected);
