@@ -11,8 +11,7 @@
 // #include "AWSIoTClient.h"
 
 // Credentials and Certificates
-// #include "aws_certificates.h"
-#include "wifi_config.h"
+#include "secrets.h"
 
 // Start web server on port 80
 WebServer server(80);

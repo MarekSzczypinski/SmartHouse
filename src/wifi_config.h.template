@@ -1,8 +1,0 @@
-#ifndef WIFI_CONFIG_H
-#define WIFI_CONFIG_H
-
-// WiFi credentials
-const char* WIFI_SSID = "type-your-wifi-ssid-here";
-const char* WIFI_PASSWORD = "type-your-wifi-password-here";
-
-#endif // WIFI_CONFIG_H

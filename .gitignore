@@ -4,11 +4,8 @@
 .vscode/launch.json
 .vscode/ipch
 
-# AWS IoT credentials
-src/aws_certificates.h
-
-# WiFi credentials
-src/wifi_config.h
+# AWS IoT credentials, WiFi credentials etc.
+src/secrets.h
 
 ### macOS ###
 # General
