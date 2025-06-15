@@ -3,18 +3,22 @@
 #include <ArduinoBLE.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <time.h>
 #include <ArduinoJson.h>
 
 #include "AddressRoomMap.h"
 #include "ExtremelySimpleLogger.h"
 
-// #include "AWSIoTClient.h"
+#include "AWSIoTClient.h"
 
 // Credentials and Certificates
 #include "secrets.h"
 
 // Start web server on port 80
 WebServer server(80);
+
+// AWS IoT Client
+AWSIoTClient awsIoTClient;
 
 // Define service and characteristic UUIDs as constants
 static const BLEUuid BATTERY_SERVICE_UUID("180F");
@@ -250,6 +254,39 @@ void handleDashboard() {
   server.send(200, "text/html", html);
 }
 
+// Function to publish sensor data to AWS IoT Core
+void publishSensorData() {
+  // Process each peripheral individually
+  for (int i = 0; i < MAX_FOUND_PERIPHERALS; i++) {
+    if (knownPeripherals[i].address != "") {
+      // Create a JSON document for this peripheral
+      StaticJsonDocument<256> jsonDoc;
+      
+      // Add data for this peripheral
+      jsonDoc["deviceId"] = knownPeripherals[i].address;
+      jsonDoc["location"] = getRoomNameByAddress(knownPeripherals[i].address);
+      jsonDoc["humidity"] = knownPeripherals[i].humidity;
+      jsonDoc["temperature"] = knownPeripherals[i].temperature;
+      jsonDoc["battery"] = knownPeripherals[i].batteryLevel;
+      jsonDoc["rssi"] = knownPeripherals[i].rssi;
+      time_t now;
+      time(&now);  // Get current UTC time
+      jsonDoc["timestamp"] = (uint32_t)now;
+      
+      // Serialize JSON to string
+      String jsonString;
+      serializeJson(jsonDoc, jsonString);
+      
+      // Publish to AWS IoT Core
+      awsIoTClient.publish(jsonString.c_str());
+      
+      // Small delay to prevent overwhelming the broker
+      delay(100);
+    }
+  }
+}
+
+
 void setup() {
   Serial.begin(115200);
 
@@ -267,6 +304,17 @@ void setup() {
   }
   Serial.println("\nWiFi connected. IP address: " + WiFi.localIP().toString());
 
+  // Set NTP details UTC time only
+  configTime(0, 0, "pool.ntp.org", "europe.pool.ntp.org");
+
+  // Setup AWS IoT Client
+  awsIoTClient.setup(AWS_CERT_CA, AWS_CERT_CRT, AWS_CERT_PRIVATE);
+  if (awsIoTClient.connect()) {
+    Serial.println("Connected to AWS IoT Core");
+  } else {
+    Serial.println("Failed to connect to AWS IoT Core");
+  }
+
   // HTTP server setup
   server.on("/", handleRoot);
   server.on("/dashboard", handleDashboard);
@@ -283,7 +331,21 @@ void setup() {
   BLE.scan();
 }
 
+// Timer variables for periodic publishing
+unsigned long previousMillis = 0;
+const long publishInterval = 60000; // Publish every 60 seconds
+
 void loop() {
   BLE.poll(); // poll for events
   server.handleClient(); // handle HTTP requests
+  
+  // Handle AWS IoT client
+  awsIoTClient.loop();
+  
+  // Publish data periodically
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= publishInterval) {
+    previousMillis = currentMillis;
+    publishSensorData();
+  }
 }
