@@ -19,6 +19,7 @@ WebServer server(80);
 
 // AWS IoT Client
 AWSIoTClient awsIoTClient;
+bool cloudPublishingEnabled = true;
 
 // Define service and characteristic UUIDs as constants
 static const BLEUuid BATTERY_SERVICE_UUID("180F");
@@ -201,6 +202,19 @@ void handleRoot() {
   server.send(200, "application/json", jsonString);
 }
 
+// Handle toggle cloud publishing
+void handleToggleCloud() {
+  if (server.hasArg("enabled")) {
+    String state = server.arg("enabled");
+    cloudPublishingEnabled = (state == "true" || state == "1");
+    LOG("Cloud publishing ");
+    LOG_LN(cloudPublishingEnabled ? "enabled" : "disabled");
+  }
+  
+  String response = "{\"cloudPublishing\": " + String(cloudPublishingEnabled ? "true" : "false") + "}";
+  server.send(200, "application/json", response);
+}
+
 // Better dashboard
 void handleDashboard() {
   String html = R"rawliteral(
@@ -222,6 +236,34 @@ void handleDashboard() {
         }
         .value { font-size: 2em; }
         .addr { font-size: 0.8em; color: #888; }
+        button#cloudBtn {
+          padding: 12px 24px;
+          font-size: 16px;
+          font-weight: bold;
+          border-radius: 8px;
+          border: none;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          background-color: #4CAF50;
+          color: white;
+          margin: 20px auto;
+          display: block;
+        }
+
+        button#cloudBtn:hover {
+          background-color: #45a049;
+          box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+          transform: translateY(-2px);
+        }
+
+        button#cloudBtn.off {
+          background-color: #f44336;
+        }
+
+        button#cloudBtn.off:hover {
+          background-color: #d32f2f;
+        }
       </style>
     </head>
     <body>
@@ -248,6 +290,36 @@ void handleDashboard() {
     }
   }
   html += R"rawliteral(
+    <div style="margin-top: 30px;">
+      <button onclick="toggleCloud()" id="cloudBtn">
+        Turn Cloud Publishing OFF
+      </button>
+    </div>
+    <script>
+      function toggleCloud() {
+        const btn = document.getElementById('cloudBtn');
+        const newState = btn.innerText.includes('OFF') ? 'false' : 'true';
+        fetch('/api/cloud?enabled=' + newState)
+          .then(response => response.json())
+          .then(data => {
+            const isEnabled = data.cloudPublishing;
+            btn.innerText = 'Turn Cloud Publishing ' + 
+              (data.cloudPublishing ? 'OFF' : 'ON');
+            btn.className = isEnabled ? 'on' : 'off';
+          });
+      }
+      // Update button state on load
+      fetch('/api/cloud')
+        .then(response => response.json())
+        .then(data => {
+          const btn = document.getElementById('cloudBtn');
+          const isEnabled = data.cloudPublishing;
+          btn.innerText = 'Turn Cloud Publishing ' + (isEnabled ? 'OFF' : 'ON');
+          btn.className = isEnabled ? 'on' : 'off';
+        });
+    </script>
+  )rawliteral";
+  html += R"rawliteral(
     </body>
     </html>
   )rawliteral";
@@ -256,6 +328,10 @@ void handleDashboard() {
 
 // Function to publish sensor data to AWS IoT Core
 void publishSensorData() {
+  // Skip if cloud publishing is disabled
+  if (!cloudPublishingEnabled) {
+    return;
+  }
   // Process each peripheral individually
   for (int i = 0; i < MAX_FOUND_PERIPHERALS; i++) {
     if (knownPeripherals[i].address != "") {
@@ -318,6 +394,7 @@ void setup() {
   // HTTP server setup
   server.on("/", handleRoot);
   server.on("/dashboard", handleDashboard);
+  server.on("/api/cloud", handleToggleCloud);
   server.begin();
   Serial.println("HTTP server started");
 
