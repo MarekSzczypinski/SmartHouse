@@ -74,9 +74,7 @@ void readFloatCharacteristicValue(BLECharacteristic& characteristic, const Strin
       float value;
       memcpy(&value, bytes, sizeof(float));
       store = value;
-      LOG(characteristicName);
-      LOG(": ");
-      LOG_LN(value);
+      LOG_PRINTF("%s: %.2f\n", characteristicName.c_str(), value);
     } else {
       LOG_LN("Received data for " + characteristicName + " too short!");
     }
@@ -89,9 +87,7 @@ void readBatteryValue(BLECharacteristic& batteryLevelCharacteristic, int& store)
     uint8_t batteryLevel;
     memcpy(&batteryLevel, bytes, sizeof(uint8_t));
     store = batteryLevel;
-    LOG("Battery Level: ");
-    LOG(batteryLevel);
-    LOG_LN("%");
+    LOG_PRINTF("Battery Level: %d %\n", batteryLevel);
   } else {
     LOG_LN("Received data for Battery Level too short!");
   }
@@ -178,8 +174,7 @@ void onPeripheralConnected(BLEDevice peripheral) {
 }
 
 void onPeripheralDisconnected(BLEDevice peripheral) {
-  LOG("Disconnected from peripheral: ");
-  LOG_LN(peripheral.address());
+  LOG_PRINTF("Disconnected from peripheral: %s\n", peripheral.address().c_str());
   int index = getPeripheralIndexByAddress(peripheral.address());
   knownPeripherals[index] = SensirionPeripheral();
   // Never stopped scanning so no need to call BLE.scan() again
@@ -211,8 +206,7 @@ void handleToggleCloud() {
   if (server.hasArg("enabled")) {
     String state = server.arg("enabled");
     cloudPublishingEnabled = (state == "true" || state == "1");
-    LOG("Cloud publishing ");
-    LOG_LN(cloudPublishingEnabled ? "enabled" : "disabled");
+    LOG_PRINTF("Cloud publishing %s", cloudPublishingEnabled ? "enabled" : "disabled");
   }
   
   String response = "{\"cloudPublishing\": " + String(cloudPublishingEnabled ? "true" : "false") + "}";
@@ -366,6 +360,21 @@ void publishSensorData() {
   }
 }
 
+#ifdef MEMORY_DEBUG
+void printMemoryInfo() {
+  Serial.println();
+  Serial.println("=== Memory Info ===");
+  Serial.printf("Free heap: %d bytes\n", ESP.getFreeHeap());
+  Serial.printf("Largest free block: %d bytes\n", ESP.getMaxAllocHeap());
+  Serial.printf("Total heap: %d bytes\n", ESP.getHeapSize());
+  Serial.printf("Free PSRAM: %d bytes\n", ESP.getFreePsram());
+  Serial.printf("Flash size: %d bytes\n", ESP.getFlashChipSize());
+  Serial.printf("Sketch size: %d bytes\n", ESP.getSketchSize());
+  Serial.printf("Free sketch space: %d bytes\n", ESP.getFreeSketchSpace());
+  Serial.println("===================");
+  Serial.println();
+}
+#endif
 
 void setup() {
   Serial.begin(115200);
@@ -410,6 +419,10 @@ void setup() {
   BLE.setEventHandler(BLEDisconnected, onPeripheralDisconnected);
   // start scanning for peripherals
   BLE.scan();
+
+  #ifdef MEMORY_DEBUG
+  printMemoryInfo();
+  #endif
 }
 
 // Timer variables for periodic publishing
@@ -429,4 +442,12 @@ void loop() {
     previousMillis = currentMillis;
     publishSensorData();
   }
+
+  #ifdef MEMORY_DEBUG
+  static unsigned long lastMemCheck = 0;
+  if (millis() - lastMemCheck > 30000) {
+    lastMemCheck = millis();
+    printMemoryInfo();
+  }
+  #endif
 }
