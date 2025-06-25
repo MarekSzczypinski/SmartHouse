@@ -76,10 +76,10 @@ static const AddressRoomPair roomSimpleMap[] = {
 ## Usage
 
 1. Power on the ESP32 and wait for it to connect to WiFi
-2. Access the dashboard at http://<esp32-ip-address>/dashboard
+2. Access the dashboard at `http://<esp32-ip-address>/dashboard`
 3. View sensor readings that update every 10 seconds
 4. Toggle cloud publishing using the button at the bottom of the dashboard
-5. Access raw JSON data at http://<esp32-ip-address>/
+5. Access raw JSON data at `http://<esp32-ip-address>/`
 
 ## Project Structure
 
