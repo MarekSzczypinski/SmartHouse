@@ -360,7 +360,7 @@ void publishSensorData() {
   }
 }
 
-#ifdef MEMORY_DEBUG
+#if MEMORY_DEBUG
 void printMemoryInfo() {
   Serial.println();
   Serial.println("=== Memory Info ===");
@@ -420,7 +420,7 @@ void setup() {
   // start scanning for peripherals
   BLE.scan();
 
-  #ifdef MEMORY_DEBUG
+  #if MEMORY_DEBUG
   printMemoryInfo();
   #endif
 }
@@ -443,7 +443,7 @@ void loop() {
     publishSensorData();
   }
 
-  #ifdef MEMORY_DEBUG
+  #if MEMORY_DEBUG
   static unsigned long lastMemCheck = 0;
   if (millis() - lastMemCheck > 30000) {
     lastMemCheck = millis();
