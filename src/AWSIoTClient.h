@@ -57,8 +57,7 @@ public:
         if (connected) {
             LOG_LN("Connected!");
         } else {
-            LOG("Failed, rc=");
-            LOG_LN(mqttClient.state());
+            LOG_PRINTF("Failed, rc=%d\n", mqttClient.state());
         }
         return connected;
     }
@@ -70,10 +69,7 @@ public:
         
         bool published = mqttClient.publish(publishTopic, payload);
         if (published) {
-            LOG("Published to ");
-            LOG(publishTopic);
-            LOG(": ");
-            LOG_LN(payload);
+            LOG_PRINTF("Published to %s: %s\n", publishTopic, payload);
         } else {
             LOG_LN("Failed to publish message");
         }
