@@ -4,12 +4,14 @@ A smart home monitoring system that collects temperature, humidity, and battery 
 
 ## Features
 
-* BLE Sensor Integration: Automatically discovers and connects to Sensirion humidity/temperature sensors
-* Real-time Dashboard: Web-based dashboard showing sensor readings with auto-refresh
-* Room Mapping: Associates sensor MAC addresses with room names for easy identification
-* AWS IoT Core Integration: Securely publishes sensor data to AWS cloud for storage and analysis
-* Cloud Toggle: Enable/disable cloud publishing directly from the dashboard
-* NTP Time Synchronization: Uses accurate UTC timestamps for data records
+* **BLE Sensor Integration**: Automatically discovers and connects to Sensirion humidity/temperature sensors
+* **Real-time Dashboard**: Web-based dashboard showing sensor readings with auto-refresh
+* **Room Mapping**: Associates sensor MAC addresses with room names for easy identification
+* **AWS IoT Core Integration**: Securely publishes sensor data to AWS cloud for storage and analysis
+* **Cloud Toggle**: Enable/disable cloud publishing directly from the dashboard
+* **NTP Time Synchronization**: Uses accurate UTC timestamps for data records
+* **Debug Mode**: Optional memory monitoring and debug output
+* **Multiple Build Configurations**: Production and debug builds via PlatformIO environments
 
 ## Hardware Requirements
 
@@ -34,6 +36,8 @@ A smart home monitoring system that collects temperature, humidity, and battery 
     * Set SQL statement to: `SELECT deviceId, location, humidity, temperature, battery, rssi, timestamp FROM 'smarthouse/sensors'`
     * Action: DynamoDBv2 -> Set table name and IAM Role that allows to put items into the DynamoDB table
 
+**Note**: The private key is only available during certificate creation and cannot be retrieved later from CloudFormation or CDK.
+
 ### Room Configuration
 
 Edit src/AddressRoomMap.h to map your sensor MAC addresses to room names:
@@ -53,7 +57,10 @@ static const AddressRoomPair roomSimpleMap[] = {
 1. Install [PlatformIO](https://platformio.org/install)
 2. Clone this repository
 3. Open the project folder in your IDE with PlatformIO extension
-4. Build and upload to your ESP32S3 board
+4. Choose your build environment:
+   - `seeed_xiao_esp32s3`: Production build
+   - `seeed_xiao_esp32s3_debug`: Debug build with memory monitoring
+5. Build and upload to your ESP32S3 board
 
 ### Using Arduino IDE
 
@@ -76,26 +83,29 @@ static const AddressRoomPair roomSimpleMap[] = {
 ## Usage
 
 1. Power on the ESP32 and wait for it to connect to WiFi
-2. Access the dashboard at `http://<esp32-ip-address>/dashboard`
-3. View sensor readings that update every 10 seconds
-4. Toggle cloud publishing using the button at the bottom of the dashboard
-5. Access raw JSON data at `http://<esp32-ip-address>/`
+2. Monitor the Serial output for connection status and IP address
+3. Access the dashboard at `http://<esp32-ip-address>/dashboard`
+4. View sensor readings that update every 10 seconds
+5. Toggle cloud publishing using the styled button at the bottom of the dashboard
+6. Access raw JSON data at `http://<esp32-ip-address>/`
+7. Check memory usage (debug build only) via Serial monitor
 
 ## Project Structure
 
-* src/main.cpp: Main application code
-* src/AddressRoomMap.h: Maps BLE addresses to room names
-* src/ExtremelySimpleLogger.h: Simple logging utility
-* src/AWSIoTClient.h: AWS IoT Core client implementation
-* src/secrets.h: WiFi and AWS credentials (not in repo)
+* **src/main.cpp**: Main application code
+* **src/AddressRoomMap.h**: Maps BLE addresses to room names
+* **src/ExtremelySimpleLogger.h**: Simple logging utility
+* **src/AWSIoTClient.h**: AWS IoT Core client implementation
+* **src/secrets.h**: WiFi and AWS credentials (not in repo)
+* **platformio.ini**: Build configurations with shared common settings
 
 ## Libraries Used
 
-* ArduinoBLE: For BLE sensor communication
-* PubSubClient: For MQTT communication with AWS IoT
-* ArduinoJson: For JSON parsing and generation
-* ESP32 WiFi: For network connectivity
-* ESP32 WebServer: For hosting the dashboard
+* **ArduinoBLE**: For BLE sensor communication
+* **PubSubClient**: For MQTT communication with AWS IoT
+* **ArduinoJson**: For JSON parsing and generation
+* **ESP32 WiFi**: For network connectivity
+* **ESP32 WebServer**: For hosting the dashboard
 
 ## License
 MIT License
