@@ -21,6 +21,9 @@ CERT_ID=$(echo $CERT_ARN | cut -d'/' -f2)
 aws iot update-certificate --certificate-id $CERT_ID --new-status INACTIVE
 aws iot delete-certificate --certificate-id $CERT_ID
 
+log_info "Deleting certificate.pem.crt and private.pem.key files"
+rm -f certificate.pem.crt private.pem.key
+
 log_info "Deleting stack $stack_name"
 aws cloudformation delete-stack --stack-name "$stack_name"
 
