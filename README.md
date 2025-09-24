@@ -36,6 +36,14 @@ A smart home monitoring system that collects temperature, humidity, and battery 
     * Set SQL statement to: `SELECT deviceId, location, humidity, temperature, battery, rssi, timestamp FROM 'smarthouse/sensors'`
     * Action: DynamoDBv2 -> Set table name and IAM Role that allows to put items into the DynamoDB table
 
+## Automatic AWS IoT Core Setup
+
+The automatic AWS IoT Core Setup can be done instead of the steps above. 
+
+1. Run `deploy.sh` script from `cloud-backend` directory.
+2. Update the certificates in `src/secrets.h` from `certificate.pem.crt` and `private.pem.key` files.
+3. If running for the first time copy the IoT Endpoint from output of `cloud-backend/deploy.sh` script to `src/secrets.h`
+
 **Note**: The private key is only available during certificate creation and cannot be retrieved later from CloudFormation or CDK.
 
 ### Room Configuration
