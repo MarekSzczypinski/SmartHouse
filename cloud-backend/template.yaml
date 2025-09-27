@@ -1,8 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: |
-  SmartHouse
-  Cloud backend for SmartHouse project.
-
+Description: Cloud backend for SmartHouse project.
 Resources:
   XiaoESP32GatewayThing:
     Type: AWS::IoT::Thing
@@ -12,7 +9,6 @@ Resources:
         Attributes:
           deviceType: ESP32Gateway
           location: SmartHouse
-
   XiaoESP32GatewayPolicy:
     Type: AWS::IoT::Policy
     Properties:
@@ -31,7 +27,6 @@ Resources:
               - iot:Subscribe
               - iot:Receive
             Resource: !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/smarthouse/commands/*
-
   SmartHouseSensorDataTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -47,7 +42,6 @@ Resources:
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
       TableName: !Sub ${AWS::StackName}-sensor-data
-
   IoTRuleRole:
     Type: AWS::IAM::Role
     Properties:
@@ -71,11 +65,12 @@ Resources:
   SmarthouseProcessSensorDataRule:
     Type: AWS::IoT::TopicRule
     Properties:
-      RuleName: !Sub 
-        - "${StackName}_sensor_data"
-        - StackName: !Join ["_", !Split ["-", !Ref AWS::StackName]]
+      RuleName: !Sub
+        - '${StackName}_sensor_data'
+        - StackName: !Join ['_', !Split ['-', !Ref AWS::StackName]]
       TopicRulePayload:
-        Sql: SELECT deviceId, location, humidity, temperature, battery, rssi, timestamp
+        Sql:
+          SELECT deviceId, location, humidity, temperature, battery, rssi, timestamp
           FROM 'smarthouse/sensors'
         Actions:
           - DynamoDBv2:
@@ -83,7 +78,6 @@ Resources:
                 TableName: !Ref SmartHouseSensorDataTable
               RoleArn: !GetAtt IoTRuleRole.Arn
         RuleDisabled: false
-
 Outputs:
   ThingName:
     Description: IoT Thing Name
