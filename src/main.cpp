@@ -8,13 +8,11 @@
 // External libraries
 #include <ArduinoBLE.h>
 #include <ArduinoJson.h>
-#include <InfluxDbClient.h>
-#include <InfluxDbCloud.h>
 
 // Internal includes
 #include "AddressRoomMap.h"
 #include "ExtremelySimpleLogger.h"
-#include "AWSIoTClient.h"
+#include "SensorsInfluxDBClient.h"
 
 // Credentials and Certificates
 #include "secrets.h"
@@ -22,12 +20,9 @@
 // Start web server on port 80
 WebServer server(80);
 
-// AWS IoT Client
-AWSIoTClient awsIoTClient;
-bool cloudPublishingEnabled = true;
-
 // InfluxDB client
-InfluxDBClient influxDBClient;
+SensorsInfluxDBClient sensorsInfluxDBClient;
+bool cloudPublishingEnabled = false;
 
 // Define service and characteristic UUIDs as constants
 static const BLEUuid BATTERY_SERVICE_UUID("180F");
@@ -329,40 +324,6 @@ void handleDashboard() {
   server.send(200, "text/html", html);
 }
 
-// Function to publish sensor data to AWS IoT Core
-void publishSensorData() {
-  // Skip if cloud publishing is disabled
-  if (!cloudPublishingEnabled) {
-    return;
-  }
-  // Process each peripheral individually
-  for (int i = 0; i < MAX_FOUND_PERIPHERALS; i++) {
-    if (knownPeripherals[i].address != "") {
-      // Create a JSON document for this peripheral
-      StaticJsonDocument<256> jsonDoc;
-      
-      // Add data for this peripheral
-      jsonDoc["deviceId"] = knownPeripherals[i].address;
-      jsonDoc["location"] = getRoomNameByAddress(knownPeripherals[i].address);
-      jsonDoc["humidity"] = knownPeripherals[i].humidity;
-      jsonDoc["temperature"] = knownPeripherals[i].temperature;
-      jsonDoc["battery"] = knownPeripherals[i].batteryLevel;
-      jsonDoc["rssi"] = knownPeripherals[i].rssi;
-      jsonDoc["timestamp"] = (uint32_t)time(NULL);
-      
-      // Serialize JSON to string
-      String jsonString;
-      serializeJson(jsonDoc, jsonString);
-      
-      // Publish to AWS IoT Core
-      awsIoTClient.publish(jsonString.c_str());
-      
-      // Small delay to prevent overwhelming the broker
-      delay(100);
-    }
-  }
-}
-
 void writeSensorDataToInfluxDB() {
   // Skip if cloud publishing is disabled
   if (!cloudPublishingEnabled) {
@@ -371,28 +332,7 @@ void writeSensorDataToInfluxDB() {
   // Process each peripheral individually
   for (int i = 0; i < MAX_FOUND_PERIPHERALS; i++) {
     if (knownPeripherals[i].address != "") {
-      // Create a Point for this peripheral
-      Point point("sensor_data");
-      point.clearFields();
-
-      // Tags
-      point.addTag("deviceId", knownPeripherals[i].address);
-      point.addTag("location", getRoomNameByAddress(knownPeripherals[i].address));
-
-      // Data
-      point.addField("humidity", knownPeripherals[i].humidity);
-      point.addField("temperature", knownPeripherals[i].temperature);
-      point.addField("battery", knownPeripherals[i].batteryLevel);
-      point.addField("rssi", knownPeripherals[i].rssi);
-
-      // Timestamp
-      point.setTime(time(NULL));
-
-      // Write the Point to InfluxDB
-      if (!influxDBClient.writePoint(point)) {
-        LOG("InfluxDB write failed: ");
-        LOG_LN(influxDBClient.getLastErrorMessage());
-      }
+      sensorsInfluxDBClient.writeSensorData(knownPeripherals[i].address, getRoomNameByAddress(knownPeripherals[i].address), knownPeripherals[i].temperature, knownPeripherals[i].humidity, knownPeripherals[i].batteryLevel, knownPeripherals[i].rssi);
 
       // Small delay to prevent overwhelming the database
       delay(100);
@@ -436,25 +376,9 @@ void setup() {
   // Set NTP details UTC time only
   configTime(0, 0, "pool.ntp.org", "europe.pool.ntp.org");
 
-  // Setup AWS IoT Client
-  awsIoTClient.setup(AWS_CERT_CA, AWS_CERT_CRT, AWS_CERT_PRIVATE);
-  if (awsIoTClient.connect()) {
-    Serial.println("Connected to AWS IoT Core");
-  } else {
-    Serial.println("Failed to connect to AWS IoT Core");
-  }
-
   // Setup InfluxDB Client
-  influxDBClient.setConnectionParams(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN, InfluxDbCloud2CACert);
-  influxDBClient.setWriteOptions(WriteOptions().writePrecision(WritePrecision::S));
-  // Check server connection
-  if (influxDBClient.validateConnection()) {
-    Serial.print("Connected to InfluxDB: ");
-    Serial.println(influxDBClient.getServerUrl());
-  } else {
-    Serial.print("InfluxDB connection failed: ");
-    Serial.println(influxDBClient.getLastErrorMessage());
-  }
+  sensorsInfluxDBClient.setup();
+  sensorsInfluxDBClient.connect();
 
   // HTTP server setup
   server.on("/", handleRoot);
@@ -485,14 +409,10 @@ void loop() {
   BLE.poll(); // poll for events
   server.handleClient(); // handle HTTP requests
   
-  // Handle AWS IoT client
-  awsIoTClient.loop();
-  
   // Publish data periodically
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= publishInterval) {
     previousMillis = currentMillis;
-    // publishSensorData();
     writeSensorDataToInfluxDB();
   }
 
