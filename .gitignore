@@ -7,6 +7,9 @@
 # AWS IoT credentials, WiFi credentials etc.
 src/secrets.h
 
+### dotenv ###
+.env
+
 ### macOS ###
 # General
 .DS_Store

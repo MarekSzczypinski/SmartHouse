@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: influxdb
+    uid: influxdb-sensors-1
+    type: influxdb
+    access: proxy
+    url: http://influxdb2:8086
+    jsonData:
+      version: Flux
+      organization: smarthouse
+      defaultBucket: sensors
+      tlsSkipVerify: true
+    secureJsonData:
+      token: $GF_DATASOURCES_INFLUXDB_TOKEN
+ 
