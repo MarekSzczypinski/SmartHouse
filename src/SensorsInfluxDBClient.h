@@ -12,7 +12,7 @@
 class SensorsInfluxDBClient {
 private:
     InfluxDBClient influxDBClient;
-    Point sensorPoint = Point("sensor");
+    Point sensorPoint = Point("sensor_measurement");
 
 public:
     SensorsInfluxDBClient() : influxDBClient(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN, InfluxDbCloud2CACert) {}
