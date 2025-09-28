@@ -27,7 +27,7 @@ services:
       - grafana-storage:/var/lib/grafana
       - ./grafana/provisioning/datasources/influxdb.yaml:/etc/grafana/provisioning/datasources/influxdb.yaml
       - ./grafana/provisioning/dashboards/sensors-dashboard.yaml:/etc/grafana/provisioning/dashboards/sensors-dashboard.yaml
-      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards/
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
     restart: unless-stopped
     networks:
       - smarthouse-net
