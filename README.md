@@ -31,11 +31,11 @@ A smart home monitoring system that collects temperature, humidity, and battery 
 
 1. Copy `.env.template` to `.env` and configure:
    ```bash
-   INFLUXDB_USERNAME=admin
-   INFLUXDB_PASSWORD=your-password
+   INFLUXDB_USERNAME=your-influxdb-userame
+   INFLUXDB_PASSWORD=your-influxdb-password
    INFLUXDB_ORG=smarthouse
    INFLUXDB_BUCKET=sensors
-   GRAFANA_USERNAME=admin
+   GRAFANA_USERNAME=your-grafana-username
    GRAFANA_PASSWORD=your-grafana-password
    INFLUXDB_GRAFANA_TOKEN=your-grafana-read-influxdb-token
    ```
