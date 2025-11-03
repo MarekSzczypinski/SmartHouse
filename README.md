@@ -142,5 +142,43 @@ static const AddressRoomPair roomSimpleMap[] = {
 * **Grafana 12.x**: Data visualization and dashboards
 * **Docker Compose**: Container orchestration
 
+## Future Milestones
+
+The following features are planned for future development:
+
+### 1. LVGL Touch Display Integration
+* **Goal**: Add a local touch display using LVGL (Light and Versatile Graphics Library)
+* **Features**: 
+  - Real-time sensor data visualization on physical display
+  - Touch interface for configuration and control
+  - Offline data viewing when network is unavailable
+* **Hardware**: Compatible touch display module for XIAO ESP32S3
+
+### 2. Over-The-Air (OTA) Updates
+* **Goal**: Investigate and implement OTA firmware updates for XIAO ESP32S3
+* **Benefits**:
+  - Remote firmware updates without physical access
+  - Easier deployment of bug fixes and new features
+  - Reduced maintenance overhead for deployed devices
+* **Implementation**: Evaluate OTA capabilities and memory constraints of XIAO platform
+
+### 3. CI/CD Pipeline Integration
+* **Goal**: Implement automated build and deployment pipeline for firmware updates
+* **Prerequisites**: Requires OTA update functionality (Milestone 2)
+* **Features**:
+  - Automated firmware builds on code commits
+  - Automated testing and validation
+  - Remote deployment to ESP32 devices via OTA
+  - Rollback capabilities for failed deployments
+* **Implementation**: GitHub Actions or GitLab CI with PlatformIO and OTA deployment
+
+### 4. Mesh Network for Extended Range
+* **Goal**: Implement mesh networking to reach sensors beyond WiFi range
+* **Approach**:
+  - Use ESP-NOW or similar protocol for mesh communication
+  - Deploy additional ESP32 nodes as mesh repeaters
+  - Extend sensor coverage to remote areas of the house
+* **Benefits**: Complete house coverage without WiFi infrastructure limitations
+
 ## License
 MIT License
