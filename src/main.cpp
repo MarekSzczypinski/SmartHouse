@@ -158,7 +158,7 @@ void onPeripheralConnected(BLEDevice peripheral) {
 
   BLEService batteryService = peripheral.service(BATTERY_SERVICE_UUID.str());
   BLECharacteristic batteryLevelCharacteristic = batteryService.characteristic(BATTERY_LEVEL_CHARACTERISTIC_UUID.str());
-  if (batteryLevelCharacteristic.canRead()) {
+  if (batteryLevelCharacteristic.canRead()) {  // we're reading to get initial battery level value since updates are very rare
     batteryLevelCharacteristic.read();
     readBatteryValue(batteryLevelCharacteristic, knownPeripherals[index].batteryLevel);
   }
@@ -206,7 +206,7 @@ void handleToggleCloud() {
   if (server.hasArg("enabled")) {
     String state = server.arg("enabled");
     cloudPublishingEnabled = (state == "true" || state == "1");
-    LOG_PRINTF("Cloud publishing %s", cloudPublishingEnabled ? "enabled" : "disabled");
+    LOG_PRINTF("Cloud publishing %s\n", cloudPublishingEnabled ? "enabled" : "disabled");
   }
   
   String response = "{\"cloudPublishing\": " + String(cloudPublishingEnabled ? "true" : "false") + "}";
