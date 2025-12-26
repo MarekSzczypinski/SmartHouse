@@ -222,6 +222,7 @@ void handleRoot() {
     responseObj["address"] = knownPeripherals[i].address;
     responseObj["humidity"] = isnan(knownPeripherals[i].humidity) ? "null" : String(knownPeripherals[i].humidity, 2);
     responseObj["temperature"] = isnan(knownPeripherals[i].temperature) ? "null" : String(knownPeripherals[i].temperature, 2);
+    responseObj["co2"] = (knownPeripherals[i].co2Level < 0) ? "null" : String(knownPeripherals[i].co2Level);
     responseObj["battery"] = (knownPeripherals[i].batteryLevel < 0) ? "null" : String(knownPeripherals[i].batteryLevel);
     responseObj["rssi"] = knownPeripherals[i].rssi;
   }
@@ -308,6 +309,9 @@ void handleDashboard() {
       html += "<div>Temperature: <span class='value'>";
       html += isnan(knownPeripherals[i].temperature) ? "N/A" : String(knownPeripherals[i].temperature, 1);
       html += " &deg;C</span></div>";
+      html += "<div>CO2: <span class='value'>";
+      html += (knownPeripherals[i].co2Level < 0) ? "N/A" : String(knownPeripherals[i].co2Level) + " %";
+      html += "</span></div>";
       html += "<div>Battery: <span class='value'>";
       html += (knownPeripherals[i].batteryLevel < 0) ? "N/A" : String(knownPeripherals[i].batteryLevel) + " %";
       html += "</span></div>";
@@ -362,7 +366,7 @@ void writeSensorDataToInfluxDB() {
   // Process each peripheral individually
   for (int i = 0; i < MAX_FOUND_PERIPHERALS; i++) {
     if (knownPeripherals[i].address != "") {
-      sensorsInfluxDBClient.writeSensorData(knownPeripherals[i].address, getRoomNameByAddress(knownPeripherals[i].address), knownPeripherals[i].temperature, knownPeripherals[i].humidity, knownPeripherals[i].batteryLevel, knownPeripherals[i].rssi);
+      sensorsInfluxDBClient.writeSensorData(knownPeripherals[i].address, getRoomNameByAddress(knownPeripherals[i].address), knownPeripherals[i].temperature, knownPeripherals[i].humidity, knownPeripherals[i].co2Level, knownPeripherals[i].batteryLevel, knownPeripherals[i].rssi);
 
       // Small delay to prevent overwhelming the database
       delay(100);

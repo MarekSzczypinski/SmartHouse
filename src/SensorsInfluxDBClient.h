@@ -32,7 +32,7 @@ public:
         return false;
     }
 
-    bool writeSensorData(const String &deviceId, const String &location, float temperature, float humidity, int battery, int rssi) {
+    bool writeSensorData(const String &deviceId, const String &location, float temperature, float humidity, int co2, int battery, int rssi) {
         sensorPoint.clearFields();
         sensorPoint.clearTags();
 
@@ -43,6 +43,7 @@ public:
         // Fields (measurements)
         sensorPoint.addField("temperature", temperature);
         sensorPoint.addField("humidity", humidity);
+        sensorPoint.addField("co2", co2);
         sensorPoint.addField("battery", battery);
         sensorPoint.addField("rssi", rssi);
 
@@ -51,7 +52,7 @@ public:
 
         bool success = influxDBClient.writePoint(sensorPoint);
         if (success) {
-            LOG_PRINTF("Data written to InfluxDB: %s, %s, %.2f, %.2f, %d, %d\n", deviceId.c_str(), location.c_str(), temperature, humidity, battery, rssi);
+            LOG_PRINTF("Data written to InfluxDB: %s, %s, %.2f, %.2f, %d, %d, %d\n", deviceId.c_str(), location.c_str(), temperature, humidity, co2, battery, rssi);
         }
         else {
             LOG_PRINTF("InfluxDB write failed: %s\n", influxDBClient.getLastErrorMessage().c_str());
