@@ -41,10 +41,13 @@ public:
         sensorPoint.addTag("location", location);
 
         // Fields (measurements)
-        sensorPoint.addField("temperature", temperature);
-        sensorPoint.addField("humidity", humidity);
-        sensorPoint.addField("co2", co2);
-        sensorPoint.addField("battery", battery);
+        if (co2 > 0) {
+            sensorPoint.addField("co2", co2);
+        } else {
+            sensorPoint.addField("temperature", temperature);
+            sensorPoint.addField("humidity", humidity);
+            sensorPoint.addField("battery", battery);
+        }
         sensorPoint.addField("rssi", rssi);
 
         // Timestamp
@@ -52,7 +55,7 @@ public:
 
         bool success = influxDBClient.writePoint(sensorPoint);
         if (success) {
-            LOG_PRINTF("Data written to InfluxDB: %s, %s, %.2f, %.2f, %d, %d, %d\n", deviceId.c_str(), location.c_str(), temperature, humidity, co2, battery, rssi);
+            LOG_PRINTF("Data written to InfluxDB: %s\n", sensorPoint.toLineProtocol().c_str());
         }
         else {
             LOG_PRINTF("InfluxDB write failed: %s\n", influxDBClient.getLastErrorMessage().c_str());

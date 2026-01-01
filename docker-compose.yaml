@@ -1,6 +1,6 @@
 services:
   influxdb2:
-    image: influxdb:2.7.12
+    image: influxdb:2.7.12-alpine
     ports:
       - '8086:8086'
     environment:

@@ -20,7 +20,7 @@ A smart home monitoring system that collects temperature, humidity, and battery 
 * Sensirion Smart Humigadget, [SHT40 Gadget](https://sensirion.com/products/catalog/SHT4x-Smart-Gadget) or [SCD4x CO₂ Gadget](https://sensirion.com/products/catalog/SCD4x-CO2-Gadget) sensors
 * WiFi connection
 
-**Note**: SCD4x CO₂ Gadget support is experimental. Since this sensor is USB-powered, temperature and humidity readings may be affected by heat generated from the USB connection, resulting in modified values (elevated temperature and lowered humidity readouts). The alteration may also be intrinsic to the CO2 sensor mechanism.
+**Note**: SCD4x CO₂ Gadget support is experimental. Since this sensor is USB-powered, temperature and humidity readings may be affected by heat generated from the USB connection, resulting in modified values (elevated temperature and lowered humidity readouts).
 
 ## Setup
 

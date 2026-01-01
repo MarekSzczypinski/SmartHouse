@@ -37,14 +37,13 @@ static const BLEUuid SENSIRION_SCD4X_CO2_CHARACTERISTIC_UUID("00007001-B38D-4985
 
 struct SensirionPeripheral {
   String address;
-  String name;
   float humidity;
   float temperature;
   int co2Level;
   int batteryLevel;
   int rssi;
 
-  SensirionPeripheral() : address(""), name(""), humidity(NAN), temperature(NAN), co2Level(-1), batteryLevel(-1), rssi(0) {}
+  SensirionPeripheral() : address(""), humidity(NAN), temperature(NAN), co2Level(-1), batteryLevel(-1), rssi(0) {}
 };
 
 static const int MAX_FOUND_PERIPHERALS = 10;
@@ -155,7 +154,6 @@ void onPeripheralConnected(BLEDevice peripheral) {
     }
   }
   knownPeripherals[index].address = peripheral.address();
-  knownPeripherals[index].name = peripheral.localName();
 
   LOG_LN("Connected. Discovering attributes ...");
   if (!peripheral.discoverAttributes()) {
@@ -310,7 +308,7 @@ void handleDashboard() {
       html += isnan(knownPeripherals[i].temperature) ? "N/A" : String(knownPeripherals[i].temperature, 1);
       html += " &deg;C</span></div>";
       html += "<div>CO2: <span class='value'>";
-      html += (knownPeripherals[i].co2Level < 0) ? "N/A" : String(knownPeripherals[i].co2Level) + " %";
+      html += (knownPeripherals[i].co2Level < 0) ? "N/A" : String(knownPeripherals[i].co2Level) + " ppm";
       html += "</span></div>";
       html += "<div>Battery: <span class='value'>";
       html += (knownPeripherals[i].batteryLevel < 0) ? "N/A" : String(knownPeripherals[i].batteryLevel) + " %";
