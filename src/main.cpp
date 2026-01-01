@@ -32,17 +32,18 @@ static const BLEUuid SENSIRION_HUMIDITY_SERVICE_UUID("00001234-B38D-4985-720E-0F
 static const BLEUuid SENSIRION_HUMIDITY_CHARACTERISTIC_UUID("00001235-B38D-4985-720E-0F993A68EE41");
 static const BLEUuid SENSIRION_TEMPERATURE_SERVICE_UUID("00002234-B38D-4985-720E-0F993A68EE41");
 static const BLEUuid SENSIRION_TEMPERATURE_CHARACTERISTIC_UUID("00002235-B38D-4985-720E-0F993A68EE41");
-
+static const BLEUuid SENSIRION_SCD4X_CO2_SERVICE_UUID("00007000-B38D-4985-720E-0F993A68EE41");
+static const BLEUuid SENSIRION_SCD4X_CO2_CHARACTERISTIC_UUID("00007001-B38D-4985-720E-0F993A68EE41");
 
 struct SensirionPeripheral {
   String address;
-  String name;
   float humidity;
   float temperature;
+  int co2Level;
   int batteryLevel;
   int rssi;
 
-  SensirionPeripheral() : address(""), name(""), humidity(NAN), temperature(NAN), batteryLevel(-1), rssi(0) {}
+  SensirionPeripheral() : address(""), humidity(NAN), temperature(NAN), co2Level(-1), batteryLevel(-1), rssi(0) {}
 };
 
 static const int MAX_FOUND_PERIPHERALS = 10;
@@ -80,6 +81,19 @@ void readFloatCharacteristicValue(BLECharacteristic& characteristic, const Strin
     }
 }
 
+void readCO2Value(BLECharacteristic& co2Characteristic, int& store) {
+  const uint8_t* bytes = co2Characteristic.value();
+  uint8_t length = co2Characteristic.valueLength();
+  if (length >= 2) {
+    uint16_t co2Level;
+    memcpy(&co2Level, bytes, sizeof(uint16_t));
+    store = co2Level;
+    LOG_PRINTF("CO2 Level: %d ppm\n", co2Level);
+  } else {
+    LOG_LN("Received data for CO2 Level too short!");
+  }
+}
+
 void readBatteryValue(BLECharacteristic& batteryLevelCharacteristic, int& store) {
   const uint8_t* bytes = batteryLevelCharacteristic.value();
   uint8_t length = batteryLevelCharacteristic.valueLength();
@@ -108,9 +122,16 @@ void onBatteryUpdated(BLEDevice peripheral, BLECharacteristic characteristic) {
   readBatteryValue(characteristic, knownPeripherals[index].batteryLevel);
 }
 
+void onCO2Updated(BLEDevice peripheral, BLECharacteristic characteristic) {
+  int index = getPeripheralIndexByAddress(peripheral.address());
+  if (index >= 0) {
+    readCO2Value(characteristic, knownPeripherals[index].co2Level);
+  }
+}
+
 void onPeripheralDiscovered(BLEDevice peripheral) {
   String name = peripheral.localName();
-  if (name == "Smart Humigadget" || name == "SHT40 Gadget") {
+  if (name == "Smart Humigadget" || name == "SHT40 Gadget" || name == "MyCO2") {
     BLE.stopScan(); // Stop scanning to let connect to peripheral
     
     LOG_LN(name + ": " + peripheral.address());
@@ -133,7 +154,6 @@ void onPeripheralConnected(BLEDevice peripheral) {
     }
   }
   knownPeripherals[index].address = peripheral.address();
-  knownPeripherals[index].name = peripheral.localName();
 
   LOG_LN("Connected. Discovering attributes ...");
   if (!peripheral.discoverAttributes()) {
@@ -167,6 +187,14 @@ void onPeripheralConnected(BLEDevice peripheral) {
     batteryLevelCharacteristic.subscribe();
   }
 
+  // No need to test for services as ArduinoBLE library handles missing services gracefully
+  BLEService scd4xCO2Service = peripheral.service(SENSIRION_SCD4X_CO2_SERVICE_UUID.str());
+  BLECharacteristic scd4xCO2LevelCharacteristic = scd4xCO2Service.characteristic(SENSIRION_SCD4X_CO2_CHARACTERISTIC_UUID.str());
+  if (scd4xCO2LevelCharacteristic.canSubscribe()) {
+    scd4xCO2LevelCharacteristic.setEventHandler(BLEUpdated, onCO2Updated);
+    scd4xCO2LevelCharacteristic.subscribe();
+  }    
+
   knownPeripherals[index].rssi = peripheral.rssi();
 
   // Once connected start scanning again
@@ -192,6 +220,7 @@ void handleRoot() {
     responseObj["address"] = knownPeripherals[i].address;
     responseObj["humidity"] = isnan(knownPeripherals[i].humidity) ? "null" : String(knownPeripherals[i].humidity, 2);
     responseObj["temperature"] = isnan(knownPeripherals[i].temperature) ? "null" : String(knownPeripherals[i].temperature, 2);
+    responseObj["co2"] = (knownPeripherals[i].co2Level < 0) ? "null" : String(knownPeripherals[i].co2Level);
     responseObj["battery"] = (knownPeripherals[i].batteryLevel < 0) ? "null" : String(knownPeripherals[i].batteryLevel);
     responseObj["rssi"] = knownPeripherals[i].rssi;
   }
@@ -278,6 +307,9 @@ void handleDashboard() {
       html += "<div>Temperature: <span class='value'>";
       html += isnan(knownPeripherals[i].temperature) ? "N/A" : String(knownPeripherals[i].temperature, 1);
       html += " &deg;C</span></div>";
+      html += "<div>CO2: <span class='value'>";
+      html += (knownPeripherals[i].co2Level < 0) ? "N/A" : String(knownPeripherals[i].co2Level) + " ppm";
+      html += "</span></div>";
       html += "<div>Battery: <span class='value'>";
       html += (knownPeripherals[i].batteryLevel < 0) ? "N/A" : String(knownPeripherals[i].batteryLevel) + " %";
       html += "</span></div>";
@@ -332,7 +364,7 @@ void writeSensorDataToInfluxDB() {
   // Process each peripheral individually
   for (int i = 0; i < MAX_FOUND_PERIPHERALS; i++) {
     if (knownPeripherals[i].address != "") {
-      sensorsInfluxDBClient.writeSensorData(knownPeripherals[i].address, getRoomNameByAddress(knownPeripherals[i].address), knownPeripherals[i].temperature, knownPeripherals[i].humidity, knownPeripherals[i].batteryLevel, knownPeripherals[i].rssi);
+      sensorsInfluxDBClient.writeSensorData(knownPeripherals[i].address, getRoomNameByAddress(knownPeripherals[i].address), knownPeripherals[i].temperature, knownPeripherals[i].humidity, knownPeripherals[i].co2Level, knownPeripherals[i].batteryLevel, knownPeripherals[i].rssi);
 
       // Small delay to prevent overwhelming the database
       delay(100);

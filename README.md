@@ -17,8 +17,10 @@ A smart home monitoring system that collects temperature, humidity, and battery 
 ## Hardware Requirements
 
 * ESP32S3 board ([Seeed XIAO ESP32S3](https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/))
-* Sensirion Smart Humigadget or [SHT40 Gadget](https://sensirion.com/products/catalog/SHT4x-Smart-Gadget) sensors
+* Sensirion Smart Humigadget, [SHT40 Gadget](https://sensirion.com/products/catalog/SHT4x-Smart-Gadget) or [SCD4x CO₂ Gadget](https://sensirion.com/products/catalog/SCD4x-CO2-Gadget) sensors
 * WiFi connection
+
+**Note**: SCD4x CO₂ Gadget support is experimental. Since this sensor is USB-powered, temperature and humidity readings may be affected by heat generated from the USB connection, resulting in modified values (elevated temperature and lowered humidity readouts).
 
 ## Setup
 
