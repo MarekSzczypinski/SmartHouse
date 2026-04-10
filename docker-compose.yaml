@@ -17,7 +17,7 @@ services:
       - smarthouse-net
 
   grafana:
-    image: grafana/grafana:12.2
+    image: grafana/grafana:12.3
     ports:
       - '3000:3000'
     environment:
@@ -26,10 +26,14 @@ services:
       - GF_DATASOURCES_INFLUXDB_TOKEN=${INFLUXDB_GRAFANA_TOKEN}
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_REGION}
+      - AWS_SNS_TOPIC_ARN=${AWS_SNS_TOPIC_ARN}
+      - ALERTS_WEBHOOK_URL=${WEBHOOK_URL}
     volumes:
       - grafana-storage:/var/lib/grafana
-      - ./grafana/provisioning/datasources/influxdb.yaml:/etc/grafana/provisioning/datasources/influxdb.yaml
-      - ./grafana/provisioning/dashboards/sensors-dashboard.yaml:/etc/grafana/provisioning/dashboards/sensors-dashboard.yaml
+      - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
     restart: unless-stopped
     networks:

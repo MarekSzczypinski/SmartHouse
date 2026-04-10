@@ -1,0 +1,26 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: TextMe
+      receivers:
+        - uid: cf8yinbm3ur5sa
+          type: sns
+          settings:
+            api_url: sns.$AWS_DEFAULT_REGION.amazonaws.com
+            sigv4:
+                access_key: $AWS_ACCESS_KEY_ID
+                region: $AWS_DEFAULT_REGION
+                secret_key: $AWS_SECRET_ACCESS_KEY
+            topic_arn: $AWS_SNS_TOPIC_ARN
+            message: '{{ template "sms.message" . }}'
+          disableResolveMessage: false
+    - orgId: 1
+      name: webhook
+      receivers:
+        - uid: cf8y3eu8u8fswe
+          type: webhook
+          settings:
+            url: $ALERTS_WEBHOOK_URL
+            httpMethod: POST
+            message: '{{ template "webhook.message" . }}'
+          disableResolveMessage: false

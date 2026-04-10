@@ -1,0 +1,164 @@
+apiVersion: 1
+groups:
+    - orgId: 1
+      name: CO2Alerts
+      folder: SmartHouse
+      interval: 1m
+      rules:
+        - uid: ff9le243dhlhca
+          title: CO2ConcentrationWarning
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: influxdb-sensors-1
+              model:
+                intervalMs: 1000
+                maxDataPoints: 43200
+                query: |
+                    from(bucket: "sensors")
+                      |> range(start: -5m)
+                      |> filter(fn: (r) => r["_measurement"] == "sensor_measurement")
+                      |> filter(fn: (r) => r["_field"] == "co2")
+                refId: A
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - B
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: mean
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 1001
+                            - 1600
+                        type: within_range_included
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 5m
+          annotations:
+            description: CO2 concentration is {{ printf "%.0f" $values.B.Value }} ppm in {{ $labels.location }} - consider ventilation
+            summary: Elevated CO2 Level
+          labels:
+            measurement: co2
+            severity: warning
+          isPaused: false
+        - uid: df9lg1przczy8c
+          title: CO2ConcentrationCritical
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: influxdb-sensors-1
+              model:
+                intervalMs: 1000
+                maxDataPoints: 43200
+                query: |
+                    from(bucket: "sensors")
+                      |> range(start: -5m)
+                      |> filter(fn: (r) => r["_measurement"] == "sensor_measurement")
+                      |> filter(fn: (r) => r["_field"] == "co2")
+                refId: A
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - B
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: mean
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 1600
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 3m
+          annotations:
+            description: 'URGENT: CO2 concentration is {{ printf "%.0f" $values.B.Value }} ppm in {{ $labels.location }} - IMMEDIATE ventilation required!'
+            summary: Critical CO2 Level
+          labels:
+            measurement: co2
+            severity: critical
+          isPaused: false

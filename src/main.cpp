@@ -435,7 +435,7 @@ void setup() {
 
 // Timer variables for periodic publishing
 unsigned long previousMillis = 0;
-const long publishInterval = 60000; // Publish every 60 seconds
+const long publishInterval = 30000; // Publish every 30 seconds
 
 void loop() {
   BLE.poll(); // poll for events

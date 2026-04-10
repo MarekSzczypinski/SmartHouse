@@ -182,5 +182,15 @@ The following features are planned for future development:
   - Extend sensor coverage to remote areas of the house
 * **Benefits**: Complete house coverage without WiFi infrastructure limitations
 
+### 5. Environmental Condition Alerting
+* **Goal**: Configure Grafana alerts to notify when sensors detect adverse environmental conditions
+* **Features**:
+  - Temperature threshold alerts (too hot/cold)
+  - Humidity level warnings (too dry/humid)
+  - Low battery notifications for sensors
+  - Sensor offline/connectivity alerts
+* **Notification Channels**: Email, Slack, Discord, or webhook integrations
+* **Implementation**: Grafana built-in alerting with SMTP configuration
+
 ## License
 MIT License

@@ -3,8 +3,9 @@ apiVersion: 1
 providers:
   - name: 'Sensors Dashboard'
     orgId: 1
+    folder: 'SmartHouse'
     type: file
     disableDeletion: false
-    updateIntervalSeconds: 10
+    updateIntervalSeconds: 60
     options:
       path: /var/lib/grafana/dashboards

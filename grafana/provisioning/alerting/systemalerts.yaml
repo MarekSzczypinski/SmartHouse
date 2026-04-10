@@ -1,0 +1,86 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: SystemAlerts
+    folder: SmartHouse
+    interval: 1m
+    rules:
+      - uid: df9cgosd81fcwa
+        title: BatteryLow
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: influxdb-sensors-1
+            model:
+              intervalMs: 1000
+              maxDataPoints: 43200
+              query: |
+                  from(bucket: "sensors")
+                    |> range(start: -5m)
+                    |> filter(fn: (r) => r["_measurement"] == "sensor_measurement")
+                    |> filter(fn: (r) => r["_field"] == "battery")
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                  - evaluator:
+                      params: []
+                      type: gt
+                    operator:
+                      type: and
+                    query:
+                      params:
+                          - B
+                    reducer:
+                      params: []
+                      type: last
+                    type: query
+              datasource:
+                  type: __expr__
+                  uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              reducer: mean
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                  - evaluator:
+                      params:
+                          - 20
+                      type: lte
+                    operator:
+                      type: and
+                    query:
+                      params:
+                          - C
+                    reducer:
+                      params: []
+                      type: last
+                    type: query
+              datasource:
+                  type: __expr__
+                  uid: __expr__
+              expression: B
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          description: Battery level is {{ printf "%.0f" $values.B.Value }}% in {{ $labels.location }}
+          summary: Low Battery Detected
+        labels:
+          severity: warning
+        isPaused: false
+        notification_settings:
+          receiver: webhook
